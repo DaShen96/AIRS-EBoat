@@ -253,6 +253,10 @@ set(msg_files
 	WheelEncoders.msg
 	Wind.msg
 	YawEstimatorStatus.msg
+	ChassisData.msg
+	px4_to_ui.msg
+	ui_to_px4_mode.msg
+	ui_to_px4_ignition.msg
 )
 list(SORT msg_files)
 

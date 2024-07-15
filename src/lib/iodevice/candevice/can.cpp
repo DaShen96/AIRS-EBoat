@@ -1,11 +1,58 @@
 #include "can.hpp"
 
-IOCan ::IOCan (/* args */)
+CANSocket ::CANSocket (const char* dev)
 {
+    if(0<isopen())
+    {
+        int flag;
+        struct sockaddr_can addr_can;
+        struct ifreq ifr;
 
+        if((_m_fd = socket(PF_CAN,SOCK_RAW,CAN_RAW)) < 0)
+        {
+            perror("Failed to open socket");
+            return;
+        }
+
+        strcpy(ifr.ifr_name,dev);
+        if(-1 == ioctl(_m_fd,SIOCGIFINDEX, &ifr))
+        {
+            perror("Failed to open socket");
+            closeDevice();
+            return;
+        }
+
+        /* Disable loopback */
+        flag = 1;
+        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &flag, sizeof(flag)))
+        {
+            perror("Failed to set setsockopt");
+            closeDevice();
+            return;
+        }
+        /* Disable receiving own message */
+        flag = 1;
+        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &flag, sizeof(flag)))
+        {
+            perror("Failed to set setsockopt");
+            closeDevice();
+            return;
+        }
+        /* Use AF_CAN protocol family */
+        addr_can.can_family = AF_CAN;
+        addr_can.can_ifindex = ifr.ifr_ifindex;
+        /* Binding socket */
+        if (-1 == bind(_m_fd, (struct sockaddr*)&addr_can, sizeof(addr_can)))
+        {
+            perror("Failed to bind can socket");
+            closeDevice();
+            return;
+        }
+
+    }
 }
 
-IOCan ::~IOCan ()
+CANSocket ::~CANSocket ()
 {
     if(isopen())
         closeDevice();
@@ -16,7 +63,7 @@ IOCan ::~IOCan ()
  * @param msec 超时时间 ms
  * @return 成功：>0 ， 失败： <=0
  */
-bool IOCan::waitForReadyRead(unsigned int msec)
+bool CANSocket::waitForReadyRead(unsigned int msec)
 {
     struct timeval tv;
     fd_set fds;
@@ -32,7 +79,7 @@ bool IOCan::waitForReadyRead(unsigned int msec)
  * @param dev 要打开的CAN设备号
  * @return 成功：true ， 失败： false
  */
-bool IOCan::openDevice(const char* dev)
+bool CANSocket::openDevice(const char* dev)
 {
     if(0<isopen())
     {
@@ -85,7 +132,7 @@ bool IOCan::openDevice(const char* dev)
  * @param baudrate 波特率
  * @return 成功：true ， 失败： false
  */
-bool IOCan::setting(unsigned int baudrate)
+bool CANSocket::setting(unsigned int baudrate)
 {
     return true;
 }
@@ -95,11 +142,11 @@ bool IOCan::setting(unsigned int baudrate)
  * @param msec 超时时间
  * @return 成功：字节数 ， 失败： -1
  */
-int IOCan::readData(unsigned int msec)
+int CANSocket::readData(unsigned int msec)
 {
 	if(waitForReadyRead(msec))
 	{
-		int nbytes = read(_m_fd,&frame,sizeof(frame));
+		int nbytes = read(_m_fd,&_frame,sizeof(_frame));
 		if(nbytes < 0)
 		{
 			printf("can read error\n");
@@ -114,9 +161,12 @@ int IOCan::readData(unsigned int msec)
  * @brief 发送CAN数据
  * @return 成功：字节数 ， 失败： -1
  */
-int IOCan::writeData()
+int CANSocket::writeData(uint32_t canid, uint8_t datalen, unsigned int *data)
 {
-   int nbytes = write(_m_fd,&frame,sizeof(frame));
+    _frame.can_id = canid;
+    _frame.can_dlc = datalen;
+    memcpy(_frame.data, data, 8);
+   int nbytes = write(_m_fd,&_frame,sizeof(_frame));
     if(nbytes < 0)
     {
 	printf("can read error\n");

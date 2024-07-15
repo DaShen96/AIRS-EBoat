@@ -6,27 +6,27 @@
 
 UdpSocket::UdpSocket(int port) {
 	// 创建socket
-	sockfd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
-	if (sockfd < 0) {
+	_sockfd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	if (_sockfd < 0) {
 		printf("create socket failed!!\n");
 		return;
 	}
 
 	// 配置服务器地址信息
-	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port);
-	server_addr.sin_addr.s_addr = INADDR_ANY;
+	memset(&_server_addr, 0, sizeof(_server_addr));
+	_server_addr.sin_family = AF_INET;
+	_server_addr.sin_port = htons(port);
+	_server_addr.sin_addr.s_addr = INADDR_ANY;
 
-	int flags = fcntl(sockfd, F_GETFL, 0);  // 获取当前状态
+	int flags = fcntl(_sockfd, F_GETFL, 0);  // 获取当前状态
 	if (flags == -1) {
 		perror("fcntl");
 		return;
 	}
-	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);  // 设置为非阻塞模式
+	fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK);  // 设置为非阻塞模式
 
 	// 绑定socket到本地地址
-	if (bind(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+	if (bind(_sockfd, (struct sockaddr*) &_server_addr, sizeof(_server_addr)) < 0) {
 		printf("bind socket failed!!\n");
 		return;
 	}
@@ -40,7 +40,7 @@ UdpSocket::UdpSocket(int port) {
  * @param 4: 目标端口号
  * @return 成功-> ture ; 失败 -> false
  */
-bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int port) {
+bool UdpSocket::send(void *message , size_t msg_len, const char* client_ip, int port) {
 	// 配置目标地址信息
 	struct sockaddr_in dest_addr;
 	memset(&dest_addr, 0, sizeof(dest_addr));
@@ -49,7 +49,7 @@ bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int 
 	dest_addr.sin_addr.s_addr = inet_addr(client_ip);
 
 	// 发送数据
-	if (sendto(sockfd, message, msg_len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0) {
+	if (sendto(_sockfd, message, msg_len, 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0) {
 		printf("send data failed!!\n");
 		return false;
 	}
@@ -62,10 +62,10 @@ bool UdpSocket::send(void* message , size_t msg_len, const char* client_ip, int 
  * @param 2: 数据大小
  * @return 成功-> ture ; 失败 -> false
  */
-bool UdpSocket::receive(void* message , size_t msg_len) {
-	socklen_t addrlen = sizeof(client_addr);
+bool UdpSocket::receive(void *message , size_t msg_len) {
+	socklen_t addrlen = sizeof(_client_addr);
 	// 接收数据
-	if (recvfrom(sockfd, message, msg_len, 0, (struct sockaddr*) &client_addr, &addrlen) < 0) {
+	if (recvfrom(_sockfd, message, msg_len, 0, (struct sockaddr*) &_client_addr, &addrlen) < 0) {
 		printf("receive data failed!!\n");
 		return false;
 	}

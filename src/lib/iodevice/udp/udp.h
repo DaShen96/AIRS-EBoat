@@ -18,19 +18,19 @@
 
 class UdpSocket {
 private:
-    int sockfd;
-    struct sockaddr_in server_addr, client_addr;
+    int _sockfd;
+    struct sockaddr_in _server_addr, _client_addr;
 
 public:
     UdpSocket(int port) ;
 
     ~UdpSocket() {
-        close(sockfd);
+        close(_sockfd);
     }
 
-    bool send(void* message , size_t msg_len, const char* client_ip, int port) ;
+    bool send(void *message , size_t msg_len, const char *client_ip, int port) ;
 
-    bool receive(void* message , size_t msg_len) ;
+    bool receive(void *message , size_t msg_len) ;
 };
 
 
