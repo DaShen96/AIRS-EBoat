@@ -2,39 +2,19 @@
 
 CANSocket ::CANSocket (const char* dev)
 {
-    if(0<isopen())
-    {
-        int flag;
         struct sockaddr_can addr_can;
         struct ifreq ifr;
-
+        printf("CAN Init!!! \n");
         if((_m_fd = socket(PF_CAN,SOCK_RAW,CAN_RAW)) < 0)
         {
-            perror("Failed to open socket");
+            printf("Failed to open socket\n");
             return;
         }
 
         strcpy(ifr.ifr_name,dev);
-        if(-1 == ioctl(_m_fd,SIOCGIFINDEX, &ifr))
+        if(0 < ioctl(_m_fd,SIOCGIFINDEX, &ifr))
         {
-            perror("Failed to open socket");
-            closeDevice();
-            return;
-        }
-
-        /* Disable loopback */
-        flag = 1;
-        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &flag, sizeof(flag)))
-        {
-            perror("Failed to set setsockopt");
-            closeDevice();
-            return;
-        }
-        /* Disable receiving own message */
-        flag = 1;
-        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &flag, sizeof(flag)))
-        {
-            perror("Failed to set setsockopt");
+            printf("Failed to open socket\n");
             closeDevice();
             return;
         }
@@ -44,12 +24,11 @@ CANSocket ::CANSocket (const char* dev)
         /* Binding socket */
         if (-1 == bind(_m_fd, (struct sockaddr*)&addr_can, sizeof(addr_can)))
         {
-            perror("Failed to bind can socket");
+            printf("Failed to bind can socket\n");
             closeDevice();
             return;
         }
 
-    }
 }
 
 CANSocket ::~CANSocket ()
@@ -83,32 +62,19 @@ bool CANSocket::openDevice(const char* dev)
 {
     if(0<isopen())
     {
-        int flag;
-	struct sockaddr_can addr_can;
-	struct ifreq ifr;
-
+        struct sockaddr_can addr_can;
+        struct ifreq ifr;
+        printf("CAN Init!!! \n");
         if((_m_fd = socket(PF_CAN,SOCK_RAW,CAN_RAW)) < 0)
         {
-            perror("Failed to open socket");
+            printf("Failed to open socket\n");
             return false;
         }
 
         strcpy(ifr.ifr_name,dev);
-        if(-1 == ioctl(_m_fd,SIOCGIFINDEX, &ifr))
+        if(0 < ioctl(_m_fd,SIOCGIFINDEX, &ifr))
         {
-            closeDevice();
-            return false;
-        }
-
-        /* Disable loopback */
-        flag = 1;
-        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &flag, sizeof(flag))) {
-            closeDevice();
-            return false;
-        }
-        /* Disable receiving own message */
-        flag = 1;
-        if (-1 == setsockopt(_m_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &flag, sizeof(flag))) {
+            printf("Failed to open socket\n");
             closeDevice();
             return false;
         }
@@ -116,19 +82,20 @@ bool CANSocket::openDevice(const char* dev)
         addr_can.can_family = AF_CAN;
         addr_can.can_ifindex = ifr.ifr_ifindex;
         /* Binding socket */
-        if (-1 == bind(_m_fd, (struct sockaddr*)&addr_can, sizeof(addr_can))) {
+        if (-1 == bind(_m_fd, (struct sockaddr*)&addr_can, sizeof(addr_can)))
+        {
+            printf("Failed to bind can socket\n");
             closeDevice();
             return false;
         }
 
     }
-
     return (isopen());
 
 }
 
 /**
- * @brief 设置CAN端口波特率，在终端使用命令“ sudo ip link set can0 up type can bitrate 500000 ”打开设备
+ * @brief 设置CAN端口波特率
  * @param baudrate 波特率
  * @return 成功：true ， 失败： false
  */
@@ -152,6 +119,7 @@ int CANSocket::readData(unsigned int msec)
 			printf("can read error\n");
 			return -1;
 		}
+        _frame_format = (_frame.can_id & CAN_EFF_FLAG) > 0;
 		return nbytes;
 	}
 	return -1;
@@ -159,17 +127,25 @@ int CANSocket::readData(unsigned int msec)
 
 /**
  * @brief 发送CAN数据
+ * @param canid 报文ID
+ * @param datalen 报文长度
+ * @param data 报文数据
+ * @param frame_format 报文格式，0 -> stand, 1 -> extend
  * @return 成功：字节数 ， 失败： -1
  */
-int CANSocket::writeData(uint32_t canid, uint8_t datalen, unsigned int *data)
+int CANSocket::writeData(uint32_t canid, uint8_t datalen, unsigned char *data, bool frame_format)
 {
-    _frame.can_id = canid;
+    if( canid > 0x7FF || frame_format )
+        _frame.can_id = canid | CAN_EFF_FLAG;
+    else
+        _frame.can_id = canid;
+
     _frame.can_dlc = datalen;
     memcpy(_frame.data, data, 8);
    int nbytes = write(_m_fd,&_frame,sizeof(_frame));
     if(nbytes < 0)
     {
-	printf("can read error\n");
+	printf("can write error\n");
 	return -1;
     }
     return nbytes;

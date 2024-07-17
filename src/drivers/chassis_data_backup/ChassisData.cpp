@@ -15,15 +15,15 @@ ChassisData::ChassisData() :
 ChassisData::~ChassisData()
 {
 	_isInit = false;
-	#ifdef UDP
+	#ifdef UDP_CHASSIS
 		delete _udp;
 	#endif
 
-	#ifdef UART
+	#ifdef UART_CHASSIS
 		delete _uart;
 	#endif
 
-	#ifdef CAN
+	#ifdef CAN_CHASSIS
 		delete _iocan;
 	#endif
 
@@ -90,15 +90,15 @@ void ChassisData::Run()
 	if(_isInit==false) {
 		_isInit = true;
 
-	#ifdef UDP
+	#ifdef UDP_CHASSIS
 		_udp = new UdpSocket(udpServer_port);
 	#endif
 
-	#ifdef UART
+	#ifdef UART_CHASSIS
 		_uart = new Uart(_uartPortName,_uartBaudRate);
 	#endif
 
-	#ifdef CAN
+	#ifdef CAN_CHASSIS
 		_iocan = new CANSocket("can0");
 		if(_iocan == NULL) {
 			printf("failed to open can\n");
@@ -107,10 +107,11 @@ void ChassisData::Run()
 	#endif
 	}
 
-#ifdef CAN
-	if(_iocan->readData(1000)) {
+#ifdef CAN_CHASSIS
+	if(_iocan->readData(1000)>0) {
 		_canID = _iocan->get_canid();
-		memcpy(_canBuffer,_iocan->get_can_recvdata(),8);
+		memcpy(_canBuffer, _iocan->get_can_recvdata(), 8);
+		_iocan->writeData(_canID, 8, _canBuffer, _iocan->get_frame_format());
 		switch (_canID) {
 			case SMC180_ID:
 				decode_throttle_smc180(_canBuffer);
@@ -124,7 +125,7 @@ void ChassisData::Run()
 	}
 #endif
 
-#ifdef UART
+#ifdef UART_CHASSIS
 	_uart->send(_sendData,sizeof(_sendData));
 	if(_uart->receive(_uartBuffer,sizeof(_uartBuffer))) {
 		switch (_uartBuffer[0])	 { //检查地址码
@@ -151,18 +152,18 @@ void ChassisData::Run()
 	}
 #endif
 
-#ifdef UDP
+#ifdef UDP_CHASSIS
 	if(udp->receive(_recvCANbuffer,sizeof(_recvCANbuffer))) {
-		eth_can.CanToEth(_recvCANbuffer);
+		_eth_can.CanToEth(_recvCANbuffer);
 		_canID = eth_can.getRecvID();
 		// eth_can.EthToCan(eth_can.getRecvData(),eth_can.getRecvID(),8);
 		// udp->send(eth_can.getSendData(),13,"192.168.0.101",4501);
 		switch (_canID) {
 			case SMC180_ID:
-				decode_throttle_smc180(eth_can.getRecvData());
+				decode_throttle_smc180(_eth_can.getRecvData());
 				break;
 			case SMC196_ID:
-				decode_throttle_smc196(eth_can.getRecvData());
+				decode_throttle_smc196(_eth_can.getRecvData());
 				break;
 			default:
 				break;

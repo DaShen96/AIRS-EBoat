@@ -77,6 +77,9 @@ void ChassisData::decode_throttle_smc180(unsigned char *data)
 	_orb_chassisData_pub.publish(_chassisData);
 }
 
+/*
+	解析SMC196型号方向盘数据
+*/
 void ChassisData::decode_throttle_smc196(unsigned char *data)
 {
 	_chassisData.timestamp = hrt_absolute_time();

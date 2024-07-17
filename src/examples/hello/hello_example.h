@@ -40,13 +40,15 @@
 #pragma once
 
 #include <px4_platform_common/app.h>
-
+#include "lib/iodevice/candevice/can.hpp"
 class HelloExample
 {
 public:
 	HelloExample() {}
 
 	~HelloExample() {}
+
+	CANSocket *_iocan;
 
 	int main();
 

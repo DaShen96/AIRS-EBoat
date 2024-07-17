@@ -46,18 +46,22 @@
 
 px4::AppState HelloExample::appState;
 
+unsigned char _canBuffer[8] = {8,7,6,5,4,3,2,1};
+
 int HelloExample::main()
 {
 	appState.setRunning(true);
 
-	int i = 0;
-
-	while (!appState.exitRequested() && i < 5) {
-		px4_sleep(2);
-
+	_iocan = new CANSocket("can0");
+	while (!appState.exitRequested()) {
+		//px4_sleep(2);
+		if(_iocan->readData(1000)>0) {
+			unsigned long _canID = _iocan->get_canid();
+			//memcpy(_canBuffer, _iocan->get_can_recvdata(), 8);
+			_iocan->writeData(0x3456, 8, _canBuffer, _iocan->get_frame_format());
+		}
 		printf("  Doing work...\n");
-		++i;
 	}
-
+	delete _iocan;
 	return 0;
 }
