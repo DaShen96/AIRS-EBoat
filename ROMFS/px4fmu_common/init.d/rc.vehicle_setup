@@ -51,6 +51,15 @@ then
 fi
 
 #
+# Differential Boat setup.
+#
+if [ $VEHICLE_TYPE = boat ]
+then
+	# Start differential drive boat apps.
+	. ${R}etc/init.d/rc.boat_apps
+fi
+
+#
 # VTOL setup.
 #
 if [ $VEHICLE_TYPE = vtol ]

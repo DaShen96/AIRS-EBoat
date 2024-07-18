@@ -60,14 +60,6 @@ private:
 #ifdef UART_CHASSIS
 	char *_uartPortName=(char *)"/dev/ttyS4";
 	int _uartBaudRate = 115200;
-	int _minAngle = -60;
-	int _maxAngle = 60;
-	int _maxThrottle = 180;
-	#define STEERINGWHEEL 0x40
-	#define THROTTLE 0x41
-	unsigned char _pendProcessData[4];
-	unsigned char _uartBuffer[8];
-	unsigned char _sendData[8] = {0x31 , 0x32 , 0x33 , 0x34 , 0x35 , 0x36 , 0x37 , 0x38};
 	Uart *_uart;
 #endif
 
@@ -84,7 +76,7 @@ private:
 	CANSocket *_iocan;
 #endif
 	bool init();
-	float decode_steerwheel(unsigned char *data);
+
 	void decode_throttle_smc180(unsigned char *data);
 	void decode_throttle_smc196(unsigned char *data);
 	uint16_t crc_check(unsigned char *pendBuffer);

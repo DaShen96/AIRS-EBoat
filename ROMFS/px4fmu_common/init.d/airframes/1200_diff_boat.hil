@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# @name Diff Boat HITL
+#
+# @type Boat
+# @class Boat
+#
+# @output MAIN0 Speed of left wheels
+# @output MAIN1 Speed of right wheels
+#
+# @maintainer DaShen
+#
+# @board px4_fmu-v2 exclude
+# @board bitcraze_crazyflie exclude
+#
+
+. ${R}etc/init.d/rc.boat_defaults
+
+param set-default BAT1_N_CELLS 4
+
+param set-default CA_AIRFRAME 6
+
+param set-default EKF2_GBIAS_INIT 0.01
+param set-default EKF2_ANGERR_INIT 0.01
+param set-default EKF2_MAG_TYPE 1
+
+param set-default FW_AIRSPD_MIN 0
+param set-default FW_AIRSPD_TRIM 1
+param set-default FW_AIRSPD_MAX 3
+
+param set-default MIS_LTRMIN_ALT 0.01
+param set-default MIS_TAKEOFF_ALT 0.01
+
+param set-default NAV_ACC_RAD 0.5
+
+# Provide ESC a constant 1500 us pulse, which corresponds to
+# idle on the Roboclaw motor controller on the Aion R1
+param set-default PWM_MAIN_DIS0 1500
+param set-default PWM_MAIN_DIS1 1500
+param set-default PWM_MAIN_MAX1 2000
+param set-default PWM_MAIN_MIN1 1000
+param set-default PWM_MAIN_MAX2 2000
+param set-default PWM_MAIN_MIN2 1000
+
+param set-default PWM_MAIN_FUNC1  101
+param set-default PWM_MAIN_FUNC2  102
+#
+# PWM Hz - 50 Hz is the normal rate in RC cars, higher rates
+# may damage analog servos.
+#
+set PWM_MAIN_RATE 50
+# Enable Airspeed check circuit breaker because Rovers will have no airspeed sensor
+param set-default CBRK_AIRSPD_CHK 162128
+
+# Differential drive acts like ackermann steering with a maximum turn angle of 180 degrees, or pi radians
+param set-default GND_MAX_ANG 3.1415
+
+param set-default HIL_ACT_FUNC1 101
+param set-default HIL_ACT_FUNC2 102
+
+param set SYS_HITL 1
+
+param set UAVCAN_ENABLE 0
+
+# disable some checks to allow to fly
+# - with usb
+param set-default CBRK_USB_CHK 197848
+# - without real battery
+param set-default CBRK_SUPPLY_CHK 894281
+# - without safety switch
+param set-default COM_PREARM_MODE 0
+param set-default CBRK_IO_SAFETY 22027
+
+set PWM_MAIN_REV2 1

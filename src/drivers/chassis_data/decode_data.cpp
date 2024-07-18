@@ -25,17 +25,6 @@ uint16_t ChassisData::crc_check(unsigned char *pendBuffer)
 	return crc16;
 
 }
-/*
-	解析方向盘角度数据
-*/
-float ChassisData::decode_steerwheel(unsigned char *data)
-{
-	float angle=0.0;
-	uint16_t resultCRC = crc_check(data);
-	if((resultCRC & 0xff )==data[6] && (resultCRC>>8 & 0xff)==data[7])
-		angle = (float)(data[3]<<24 | data[2]<<16 | data[1]<<8 | data[0])/100.0f/_maxAngle;
-	return angle;
-}
 
 /*
 	解析SMC180型号油门传感器数据

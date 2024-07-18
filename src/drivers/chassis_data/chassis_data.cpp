@@ -71,7 +71,7 @@ int ChassisData::run()
 			if(_iocan->readData(1000)>0) {
 				_canID = _iocan->get_canid();
 				memcpy(_canBuffer, _iocan->get_can_recvdata(), 8);
-				_iocan->writeData(_canID, 8, _canBuffer, _iocan->get_frame_format());
+				//_iocan->writeData(_canID, 8, _canBuffer, _iocan->get_frame_format());
 				switch (_canID) {
 					case SMC180_ID:
 						decode_throttle_smc180(_canBuffer);

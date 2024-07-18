@@ -81,6 +81,9 @@ if(CONFIG_MODULES_DIFFERENTIAL_DRIVE)
 	px4_add_romfs_files(
 		rc.rover_differential_apps
 		rc.rover_differential_defaults
+
+		rc.boat_apps
+		rc.boat_defaults # hack
 	)
 endif()
 
